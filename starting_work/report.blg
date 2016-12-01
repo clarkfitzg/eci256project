@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: report.aux
+The style file: apalike.bst
+Database file #1: citations.bib
+Warning--there's a number but no volume in chen2004systematic
+Warning--there's a number but no volume in hall1991freeway
+Warning--there's a number but no volume in wieczorek2010techniques
+Warning--there's a number but no volume in zhang2004some
+You've used 5 entries,
+            1935 wiz_defined-function locations,
+            504 strings with 4623 characters,
+and the built_in function-call counts, 1982 in all, are:
+= -- 196
+> -- 80
+< -- 2
++ -- 26
+- -- 26
+* -- 185
+:= -- 350
+add.period$ -- 15
+call.type$ -- 5
+change.case$ -- 38
+chr.to.int$ -- 5
+cite$ -- 9
+duplicate$ -- 69
+empty$ -- 136
+format.name$ -- 35
+if$ -- 375
+int.to.chr$ -- 1
+int.to.str$ -- 0
+missing$ -- 5
+newline$ -- 28
+num.names$ -- 15
+pop$ -- 30
+preamble$ -- 1
+purify$ -- 38
+quote$ -- 0
+skip$ -- 46
+stack$ -- 0
+substring$ -- 142
+swap$ -- 5
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 30
+warning$ -- 4
+while$ -- 18
+width$ -- 0
+write$ -- 67
+(There were 4 warnings)
