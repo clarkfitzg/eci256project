@@ -2,9 +2,9 @@
 
 datadir = "~/data/pems/5min"
 
-file5min = list.files(datadir, full.names = TRUE)
+newdatadir = "~/data/pems/5min80"
 
-fname = file5min[1]
+file5min = list.files(datadir, full.names = TRUE)
 
 cols = c(Timestamp = 1, Station = 2, Occupancy = 11)
 
@@ -34,14 +34,23 @@ writeWB80 = function(fname)
                     , occupancy = d2[, "V11"]
                     )
 
-    d4 = reshape(d3
+    d4 = reshape(d3[order(d3$minute, d3$Abs_PM), ]
                  , idvar = "Abs_PM"
                  , timevar = "minute"
                  , direction = "wide"
                  )
 
+    d5 = d4[order(d4$Abs_PM, decreasing = TRUE), ]
 
-    newfname = strsplit(fname, "\\.")[[1]]
-    newfname = paste(newfname[1], "_WB80.", newfname[2], sep = "")
+    colnames(d5) = gsub("occupancy\\.", "m", colnames(d5))
 
+    # Just want the date part
+    dt = gsub(".+5min_(.+)\\.txt", "\\1", fname)
+    newfname = paste0(newdatadir, "/", dt, ".csv")
+
+    write.csv(d5, newfname, row.names = FALSE)
 }
+
+#fname = file5min[2]
+
+lapply(file5min, writeWB80)
