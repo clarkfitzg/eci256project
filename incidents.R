@@ -39,7 +39,7 @@ chp3$bizday = !(chp3$weekday %in% c("Saturday", "Sunday"))
 # How about I just do all weekdays in the first month with no holidays?
 # That's April
 
-chp4 = chp3[chp3$collision & chp3$bizday, ]
+chp4 = chp3[chp3$bizday, ]
 
 # In the location we see that many of these are onramp / offramps.
 # Might want to remove those.
