@@ -1,5 +1,7 @@
 # Thu Dec  1 15:12:00 PST 2016
 
+source("helpers.R")
+
 datadir = "~/data/pems/5min"
 
 newdatadir = "~/data/pems/5min80"
@@ -10,13 +12,6 @@ cols = c(Timestamp = 1, Station = 2, Occupancy = 11)
 
 station = read.csv("station80.csv")
 
-
-extract_minutes = function(x){
-    ts = as.POSIXct(x, format = "%m/%d/%Y %H:%M:%S")
-    hours = as.integer(format(ts, "%H"))
-    minutes = as.integer(format(ts, "%M"))
-    60L * hours + minutes
-}
 
 
 writeWB80 = function(fname)

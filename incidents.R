@@ -2,6 +2,8 @@
 #
 # Working quickly now to get freeway incidents
 
+source("helpers.R")
+
 chp = read.csv("~/data/pems/chp/all_text_chp_incidents_month_2016_04.txt"
                , header = FALSE)
 
@@ -45,5 +47,7 @@ chp4 = chp3[chp3$bizday, ]
 # Might want to remove those.
 
 chp4$onoff = grepl("(onr)|(ofr)", chp4[, 6], ignore.case = TRUE)
+
+chp4$minute = extract_minutes(chp4[, "V4"])
 
 write.csv(chp4, "chp_incidents_80W.csv", row.names = FALSE)

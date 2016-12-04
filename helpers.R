@@ -36,14 +36,13 @@ read30sec = function(file, lanes = 1:2, numlanes = 8, nrows = -1, ...)
 }
 
 
-#' Extract the minutes 
-#'
-#' @param ts POSIXct timestamp
-extract_minutes = function(ts){
+extract_minutes = function(x){
+    ts = as.POSIXct(x, format = "%m/%d/%Y %H:%M:%S")
     hours = as.integer(format(ts, "%H"))
     minutes = as.integer(format(ts, "%M"))
     60L * hours + minutes
 }
+
 
 
 #' Helper for infer_colnames
