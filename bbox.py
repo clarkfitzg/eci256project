@@ -14,7 +14,9 @@ def summ_stats(slc, da):
             "Abs_PM_max": mile.max(),
             "pixels": da[slc].sum(),
             }
-    return {k: float(v) for k, v in d.items()}
+    d = {k: float(v) for k, v in d.items()}
+    d["day"] = str(da["day"])
+    return d
 
 
 def process_image(da):
