@@ -59,42 +59,26 @@
 
 \begin{document}
 
-\title{ECI 256 Final Project}
+\title{Relating Traffic Events to CHP Incidents\\
+ECI 256 Final Project}
 \date{December 2016}
 \author{Clark Fitzgerald}
 \maketitle
 
-\section{Abstract}
+\begin{abstract}
 
-Goal- Find all the active fixed bottlenecks in the 2016 PeMS data. Quantify
-when and where they exist. Rank them in order of severity. Distinguish
-temporary from permanent bottlenecks. Compare with highway incident data to
-determine which are caused by accidents. 
+In this project image processing techniques were used to detect traffic
+events within PeMS data for I80 West in the month of April 2016. 
+These events were then related to CHP incident reports.
 
-To do all this we'll need heuristics and well defined measures for
-comparison. It would be best to take this from the established literature.
+\end{abstract}
 
-Note- These are initial thoughts before doing the literature review.
+\section{Introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-One general heuristic for this is to find all places that the velocity $v$ or
-density $\rho$ is much lower upstream than downstream for at least some
-period of time $T_{\min}$. Then it's reasonable to say there is a
-bottleneck between those two mile markers.
+What 
 
-We can do this with a two stage approach. First look at every timestamp and
-check if the average velocity for station $i$ is below some threshold
-$v_{i}$ while station $i + 1$, the next one downstream on the freeway has
-traffic moving at velocity greater than $v_{i + 1}$. If this condition persists for
-longer than $t_{\min}$ then call it a bottleneck between station $i$ and $i
-+ 1$. This can then be used to check dimensions of the bottleneck in time
-and space. There we go- that's a great title- Spatial temporal dimensions
-of traffic bottlenecks.
-
-Choosing an appropriate $v_i$ here may be difficult- so it would be best to
-use something different for each station. 
-
-We may want to forget about detecting bottlenecks if accurate data
-are too far apart in space or time- ie. 5 miles is probably too far.
+A traffic event is 
 
 \section{Review}
 
@@ -135,9 +119,24 @@ passenger cars per lane per hour.
 TODO: find papers that quantify traffic impacts of construction and various
 types of accidents.
 
-\section{Image Processing}
+\section{Data Analysis}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Tue Nov 15 08:52:50 PST 2016
+\begin{figure}
+    \includegraphics[scale=0.5]{../diffs.png}
+    \caption{This shows the difference in occupancy from the median. Areas
+    of unusually high occupancy are colored dark red.
+    }
+\end{figure}
+
+
+
+
+\begin{figure}
+    \includegraphics[scale=0.5]{../occ_sd.png}
+    \caption{Occupancy varies more in areas of high traffic.}
+\end{figure}
+
 
 A different approach would be to treat the occupancy data as \emph{images}.
 We can use opencv to do this. For each freeway we can take the following
@@ -186,6 +185,10 @@ Then we can answer questions such as:
 But how can these results be useful more broadly? More accurate
 simulations. Input to real time routing. Impacts of planned construction
 events. Scheduling CHP patrols and recovery services.
+
+\section{Conclusions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 My favorite broad idea: Empirically quantify the impact of various flow levels on congestion.
 I suspect that for a given type of accident total delay experienced by
