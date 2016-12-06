@@ -13,6 +13,14 @@ chp$day = gsub("([0-9]{2}/[0-9]{2}/[0-9]{4}).+", "\\1", chp[, 4])
 # incidents
 traffic$key = seq(nrow(traffic))
 
+# Computed columns
+chp$type = chp$V5
+traffic$Abs_PM_total = traffic$Abs_PM_max - traffic$Abs_PM_min
+traffic$minute_total = traffic$minute_max - traffic$minute_min
+
+traffic$bbox_area = with(traffic, Abs_PM_total * minute_total)
+
+
 chp$Abs_PM = chp[, 18]
 
 # For each CHP event check if there's associated traffic.
@@ -46,14 +54,61 @@ associate_chp = function(ch, mile_tol = 1, min_tol = 10)
     }
 }
 
+# We're being sloppy with about 8 warnings, no big deal.
 links = sapply(split(chp, seq(nrow(chp))), associate_chp)
 
-# Loosening up the tolerances detects around twice as many events.
+# Loosening up the tolerances detects around twice as many events, ie we
+# can associate about 17% of the CHP incidents with the easily detectable
+# traffic events we found.
 mean(is.na(links))
 
-# So one detected traffic event had from 7-9 chp incidents associated with it.
+# Conversely, about 24% of the traffic events have associated CHP incidents
+traffic$has_incident = traffic$key %in% links
+mean(traffic$has_incident)
+
+# One detected traffic event had from 7-9 chp incidents associated with it.
 table(links)
 
 chp$key = links
 
-linked = merge(chp, traffic, by = "key")
+# Not totally sure if we should be taking all of them here
+linked = merge(chp, traffic, by = "key", all.x = TRUE, all.y = FALSE)
+
+# Check the relationship between pixels and actual area
+fit_pix = lm(pixels ~ bbox_area, linked)
+# Looks like excellent linear relationship, so lets just use bbox_area
+# since it has units, unlike pixels
+
+keeper_cols = c("bbox_area")
+
+# Assume it's 0 if we didn't find anything
+linked[is.na(linked[, keeper_cols[1]]), keeper_cols] = 0
+
+# Interesting negative result:
+# There's no evidence that the type of incident influences the area of the
+# impact.
+fit1 = lm(bbox_area ~ collision, linked)
+
+
+# We can do descriptive statistics and say things about the pixels now.
+# What is the difference between traffic events associated with CHP
+# incidents and those which are not? Might be good to do this as a logistic
+# regression.
+fit2 = lm(bbox_area ~ has_incident, traffic)
+
+# This is an intuitive result, it says that events with larger impacts are
+# more likely to be associated with a CHP traffic incident.
+fit2b = glm(has_incident ~ bbox_area, traffic, family = "binomial")
+summary(fit2b)
+
+# So a delay over 0.5 mile for 20 minutes will increase the odds that
+# there was an associated CHP incident by 1.13.
+exp(0.5 * 20 * coef(fit2b)['bbox_area'])
+
+# And if there's a traffic incident affecting traffic for 3 miles and 2
+# hours then there's a 90% chance that it will be associated with a CHP
+# event.
+predict(fit2b, data.frame(bbox_area = 3 * 120), type = "response")
+
+fit = lm(minute_total ~ collision, linked)
+summary(fit)
