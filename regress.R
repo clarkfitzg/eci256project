@@ -18,14 +18,21 @@ chp$Abs_PM = chp[, 18]
 # For each CHP event check if there's associated traffic.
 # Pretty sure there can only be one, but might have to check.
 
-associate_chp = function(ch)
+associate_chp = function(ch, mile_tol = 0, min_tol = 0)
 {
     # ch is one row of chp dataframe
+    # We just check if time t and position x are inside (a, b)
+    x = ch$Abs_PM
+    xa = traffic$Abs_PM_min - mile_tol
+    xb = traffic$Abs_PM_max + mile_tol
+    t = ch$minute
+    ta = traffic$minute_min - mile_tol
+    tb = traffic$minute_max + mile_tol
     tr = (traffic$day == ch$day) &
-        (traffic$Abs_PM_min <= ch$Abs_PM) &
-        (ch$Abs_PM <= traffic$Abs_PM) &
-        (traffic$minute_min <= ch$minute) &
-        (ch$minute <= traffic$minute_min)
+        (xa <= x) &
+        (x <= xb) &
+        (ta <= t) &
+        (t <= tb)
     sumtr = sum(tr)
     if(sumtr == 0){
         return(NA)
@@ -38,4 +45,12 @@ associate_chp = function(ch)
     }
 }
 
-links = apply(chp, 1, associate_chp)
+links = sapply(split(chp, seq(nrow(chp))), associate_chp)
+
+
+mean(is.na(links))
+
+# So one detected traffic event had 7 incidents associated with it.
+table(links)
+
+split(chp, seq(nrow(chp)))[[1]]
