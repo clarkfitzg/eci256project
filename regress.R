@@ -18,7 +18,7 @@ chp$Abs_PM = chp[, 18]
 # For each CHP event check if there's associated traffic.
 # Pretty sure there can only be one, but might have to check.
 
-associate_chp = function(ch, mile_tol = 0, min_tol = 0)
+associate_chp = function(ch, mile_tol = 1, min_tol = 10)
 {
     # ch is one row of chp dataframe
     # We just check if time t and position x are inside (a, b)
@@ -41,16 +41,19 @@ associate_chp = function(ch, mile_tol = 0, min_tol = 0)
         return(traffic$key[tr])
     }
     else{
-        stop("detected multiple events")
+        warning("detected multiple events, returning first")
+        return(traffic$key[tr][1])
     }
 }
 
 links = sapply(split(chp, seq(nrow(chp))), associate_chp)
 
-
+# Loosening up the tolerances detects around twice as many events.
 mean(is.na(links))
 
-# So one detected traffic event had 7 incidents associated with it.
+# So one detected traffic event had from 7-9 chp incidents associated with it.
 table(links)
 
-split(chp, seq(nrow(chp)))[[1]]
+chp$key = links
+
+linked = merge(chp, traffic, by = "key")
