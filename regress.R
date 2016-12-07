@@ -76,7 +76,7 @@ bp["traffic"] = mean(traffic$has_incident)
 
 pdf("percent_events.pdf")
 
-barplot(100 * bp, main = "Percentage of events associated")
+barplot(100 * bp, main = "Percentage of events associated", ylim = c(0, 100))
 
 dev.off()
 
@@ -168,6 +168,8 @@ summary(fit5)
 
 # This shows something, but it could be an artifact of detecting too many
 # traffic events in the busy area
+# Appears to be a large increase in the impact during regions of high
+# traffic
 fit6 = lm(bbox_area ~ rush_hour * busy_area, linked)
 summary(fit6)
 
