@@ -18,10 +18,18 @@ chp$type = chp$V5
 traffic$Abs_PM_total = traffic$Abs_PM_max - traffic$Abs_PM_min
 traffic$minute_total = traffic$minute_max - traffic$minute_min
 
+traffic$Abs_PM_mean = rowMeans(cbind(traffic$Abs_PM_max, traffic$Abs_PM_min))
+traffic$minute_mean = rowMeans(cbind(traffic$minute_max, traffic$minute_min))
+
 traffic$bbox_area = with(traffic, Abs_PM_total * minute_total)
 
+# Suppose we only look at large traffic events
+#traffic = traffic[traffic$bbox_area >= 60, ]
 
 chp$Abs_PM = chp[, 18]
+
+chp$rush_hour = (6 * 60 < chp$minute) & (10 * 60 < chp$minute)
+chp$busy_area = chp$Abs_PM < 15
 
 # For each CHP event check if there's associated traffic.
 # Pretty sure there can only be one, but might have to check.
@@ -60,11 +68,17 @@ links = sapply(split(chp, seq(nrow(chp))), associate_chp)
 # Loosening up the tolerances detects around twice as many events, ie we
 # can associate about 17% of the CHP incidents with the easily detectable
 # traffic events we found.
-mean(is.na(links))
+bp = c(chp = mean(!is.na(links)))
 
 # Conversely, about 24% of the traffic events have associated CHP incidents
 traffic$has_incident = traffic$key %in% links
-mean(traffic$has_incident)
+bp["traffic"] = mean(traffic$has_incident)
+
+pdf("percent_events.pdf")
+
+barplot(100 * bp, main = "Percentage of events associated")
+
+dev.off()
 
 # One detected traffic event had from 7-9 chp incidents associated with it.
 table(links)
@@ -89,6 +103,7 @@ linked[is.na(linked[, keeper_cols[1]]), keeper_cols] = 0
 # impact.
 fit1 = lm(bbox_area ~ collision, linked)
 
+summary(fit1)
 
 # We can do descriptive statistics and say things about the pixels now.
 # What is the difference between traffic events associated with CHP
@@ -96,10 +111,22 @@ fit1 = lm(bbox_area ~ collision, linked)
 # regression.
 fit2 = lm(bbox_area ~ has_incident, traffic)
 
+
 # This is an intuitive result, it says that events with larger impacts are
 # more likely to be associated with a CHP traffic incident.
 fit2b = glm(has_incident ~ bbox_area, traffic, family = "binomial")
+
 summary(fit2b)
+
+pdf("logistic.pdf")
+
+with(traffic, plot(bbox_area, has_incident
+     , main = "Fitted Logistic Regression Curve"))
+xy = data.frame(x = traffic$bbox_area, y = fitted(fit2b))
+xy = xy[order(xy$x), ]
+lines(xy$x, xy$y, col = "red")
+
+dev.off()
 
 # So a delay over 0.5 mile for 20 minutes will increase the odds that
 # there was an associated CHP incident by 1.13.
@@ -110,7 +137,46 @@ exp(0.5 * 20 * coef(fit2b)['bbox_area'])
 # event.
 predict(fit2b, data.frame(bbox_area = 3 * 120), type = "response")
 
-fit = lm(minute_total ~ collision, linked)
-summary(fit)
+# bbox_area of 240 corresponds to an event affecting
+# 1 hour and 4 miles of highway
+250 / 60
 
-# What was the event that happened on 
+# 67% here affect an area less than 1 mile for 1 hour
+mean(traffic$bbox_area < 60)
+
+# Not seeing any relationship here
+fit3 = lm(bbox_area ~ type, linked)
+summary(fit3)
+
+# So offramp doesn't seem to affect this
+fit4 = lm(has_incident ~ onoff, linked)
+summary(fit4)
+
+pdf("pointplot.pdf")
+with(chp, plot(minute, Abs_PM), type = "point")
+with(traffic, points(minute_mean, Abs_PM_mean, pch = 2))
+legend("topright", pch = 1:2
+       , legend = c("CHP incidents", "traffic events")
+       , bg = "white"
+       )
+dev.off()
+
+
+# No relationship here
+fit5 = glm(has_incident ~ rush_hour + busy_area, linked, family = "binomial")
+summary(fit5)
+
+# This shows something, but it could be an artifact of detecting too many
+# traffic events in the busy area
+fit6 = lm(bbox_area ~ rush_hour * busy_area, linked)
+summary(fit6)
+
+# Possibly the most non normal residual ever seen
+#plot(fit6)
+
+linked$logbbox_area = log(linked$bbox_area + 1)
+fit7 = lm(logbbox_area ~ rush_hour * busy_area, linked)
+summary(fit7)
+
+# Also crazy
+#plot(fit7)
