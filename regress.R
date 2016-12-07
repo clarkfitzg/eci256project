@@ -112,3 +112,5 @@ predict(fit2b, data.frame(bbox_area = 3 * 120), type = "response")
 
 fit = lm(minute_total ~ collision, linked)
 summary(fit)
+
+# What was the event that happened on 

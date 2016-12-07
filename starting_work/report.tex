@@ -67,9 +67,10 @@ ECI 256 Final Project}
 
 \begin{abstract}
 
-In this project image processing techniques were used to detect traffic
-events within PeMS data for I80 West in the month of April 2016. 
-These events were then related to CHP incident reports.
+In this project image processing techniques were used to detect regions of
+    unusally high vehicle occupancy 
+within PeMS data for I80 West in the month of April 2016. 
+These high occupancy events were then related to CHP incident reports.
 
 \end{abstract}
 
@@ -119,31 +120,94 @@ passenger cars per lane per hour.
 TODO: find papers that quantify traffic impacts of construction and various
 types of accidents.
 
-\section{Data Analysis}
+\section{Data Preparation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+5 minute observation data for weekdays in April was downloaded in bulk from California's PeMS
+system. April was chosen because it's the first month of the year without
+holidays. Weekdays were used to avoid less regular traffic patterns on the
+weekend.
+The raw 30 second observations were also tried, but these were
+excessively variable and noisy, which makes them less suitable for this
+analysis.
+
+PeMS defines the variable occupancy used as "Average occupancy across all lanes over
+the 5-minute period expressed as a decimal number between 0 and 1." Taking
+the average over time and all lanes is useful in reducing the variance of
+the occupancy, which is why it was used over the occupancy in one
+particular lane.
+
+Let $x_{ijk}$ be the occupancy value on the $i$th day, $t$th 5 minute time
+interval, and $m$th mile marker. Let $\bar{x}_{\cdot jk}$ be the median
+value for across all 21 weekdays in April. 
+A derived variable was formed by taking the difference
+\begin{equation}
+    \label{eq:diff}
+    y_{ijk} \equiv x_{ijk} - \bar{x}_{\cdot x_{ijk}}
+\end{equation}
+All further analysis centered on these differences.
+
 \begin{figure}
+    \label{fig:occ_sd}
+    \centering
+    \includegraphics[scale=0.5]{../occ_sd.png}
+    \caption{Occupancy varies more in areas of high traffic.}
+\end{figure}
+
+Figure~\ref{fig:occ_sd} shows the standard deviations of the difference
+$y_{ijk}$. The bright line around mile 8 marks the toll plaza to enter
+San Francisco. Lighter regions occur during the morning rush hour starting just
+before 7 AM, and all along the area between mile markers 0 and 15 during
+the day time, which corresponds to the area of high traffic between San
+Francisco and Berkeley. This shows that occupancy exhibits significant
+variablility in regions of congested traffic. The implication for this
+analysis is that the difference $y_{ijk}$ will have more noise in these
+regions, which makes it more difficult to accurately detect traffic events
+of high occupancy.
+
+\begin{figure}
+    \label{fig:diffs}
+    \centering
     \includegraphics[scale=0.5]{../diffs.png}
     \caption{This shows the difference in occupancy from the median. Areas
     of unusually high occupancy are colored dark red.
     }
 \end{figure}
 
+Figure~\ref{fig:diffs} displays the differences $y_{ijk}$ as defined in
+equation~\ref{eq:diff} on April 25th.  Corresponding CHP incidents have
+been plotted in the same graph.  Two areas of high occupancy exist around
+minute 400, one at mile 30 and one just above mile 40. Since there are
+green points representing collisions in these regions it seems reasonable to
+associate the traffic event with CHP incident data.
 
-
+Simple image processing techniques were used to isolate and quantify these areas of
+high occupancy. The first step was to use simple thresholding to create a
+new binary variable that flags every observation that's larger than a
+certain size.
+Mathematically, let $z_{ijk} = 1 if y_{ijk} > t$ and $z_{ijk} = 0 if y_{ijk}
+\leq t$. Some experimentation showed $t = 0.1$ to be a reasonable threshold
+value. This produces figure~\ref{fig:thresh}. This resulting variable
+$z_{ijk}$ was
+then treated as an image; shapes were inferred by finding bounding boxes
+for connected components.
 
 \begin{figure}
-    \includegraphics[scale=0.5]{../occ_sd.png}
-    \caption{Occupancy varies more in areas of high traffic.}
+    \label{fig:thresh}
+    \centering
+    \includegraphics[scale=0.5]{../thresh.png}
+    \caption{Areas of high occupancy have been converted to a binary
+    variable.}
 \end{figure}
 
 
-A different approach would be to treat the occupancy data as \emph{images}.
+Occupancy data was treated as an image. To compute the 
+
 We can use opencv to do this. For each freeway we can take the following
 steps:
 \begin{enumerate}
-    \item Use R to read the raw file and convert to an image with many missing
-        values. This means expansion to a uniformly spaced grid.
+    \item Read the raw file and convert it to an image with many missing
+        values. 
     \item Interpolate missing values. 
     \item Threshold the image, so for a pixel with density $\rho >
         \rho_0$
@@ -185,6 +249,11 @@ Then we can answer questions such as:
 But how can these results be useful more broadly? More accurate
 simulations. Input to real time routing. Impacts of planned construction
 events. Scheduling CHP patrols and recovery services.
+
+\section{Statistical Analysis}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+About
 
 \section{Conclusions}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
