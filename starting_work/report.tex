@@ -62,12 +62,12 @@
 \title{Relating Traffic Events to CHP Incidents\\
 ECI 256 Final Project}
 \date{December 2016}
-\author{Clark Fitzgerald}
+\author{Clark Fitzgerald, Angela Tobin}
 \maketitle
 
 \begin{abstract}
 
-In this project image processing techniques were used to detect regions of
+Image processing techniques were used to detect regions of
     unusally high vehicle occupancy 
 within PeMS data for I80 West in the month of April 2016. 
 These high occupancy events were then related to CHP incident reports.
@@ -125,19 +125,19 @@ types of accidents.
 \section{Data Preparation}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-5 minute observation data for weekdays in April was downloaded in bulk from California's PeMS
-system. April was chosen because it's the first month of the year without
-holidays. Weekdays were used to avoid less regular traffic patterns on the
-weekend.
-The raw 30 second observations were also tried, but these were
-excessively variable and noisy, which makes them less suitable for this
-analysis.
+5 minute observation data for weekdays in April was downloaded in bulk from
+California's PeMS system. April was chosen because it's the first month of
+the year without holidays. Weekdays were used to avoid less regular traffic
+patterns on the weekend.  The raw 30 second observations were also tried,
+but these were excessively variable and noisy, which makes them less
+suitable for this analysis.
 
 PeMS defines the variable occupancy used as "Average occupancy across all lanes over
 the 5-minute period expressed as a decimal number between 0 and 1." Taking
 the average over time and all lanes is useful in reducing the variance of
 the occupancy, which is why it was used over the occupancy in one
-particular lane.
+particular lane. In \cite{daganzo1997fundamentals} Daganzo justifies the
+use of occupancy as a proxy for congestion. 
 
 Let $x_{ijk}$ be the occupancy value on the $i$th day, $t$th 5 minute time
 interval, and $m$th mile marker. Let $\bar{x}_{\cdot jk}$ be the median
@@ -183,17 +183,6 @@ minute 400, one at mile 30 and one just above mile 40. Since there are
 green points representing collisions in these regions it seems reasonable to
 associate the traffic event with CHP incident data.
 
-Simple image processing techniques were used to isolate and quantify these areas of
-high occupancy. The first step was to use simple thresholding to create a
-new binary variable that flags every observation that's larger than a
-certain size.
-Mathematically, let $z_{ijk} = 1 if y_{ijk} > t$ and $z_{ijk} = 0 if y_{ijk}
-\leq t$. Some experimentation showed $t = 0.1$ to be a reasonable threshold
-value. This produces figure~\ref{fig:thresh}. This resulting variable
-$z_{ijk}$ was
-then treated as an image; shapes were inferred by finding bounding boxes
-for connected components.
-
 \begin{figure}
     \label{fig:thresh}
     \centering
@@ -202,29 +191,115 @@ for connected components.
     variable.}
 \end{figure}
 
+Simple image processing techniques were used to isolate and quantify these areas of
+high occupancy. The first step was to use simple thresholding to create a
+new binary variable that flags every observation that's larger than a
+certain size.
+Mathematically, let $z_{ijk} = 1$ if $y_{ijk} > t$ and $z_{ijk} = 0$ if $y_{ijk}
+\leq t$. Some experimentation showed $t = 0.1$ to be a reasonable threshold
+value. This produces figure~\ref{fig:thresh}. This resulting variable
+$z_{ijk}$ was
+then treated as an image; shapes were inferred by finding bounding boxes
+for connected components as in figure~\ref{fig:thresh}. These bounding
+boxes then define what we consider to be a traffic event. 
+
+\begin{figure}
+    \label{fig:pointplot}
+    \centering
+    \includegraphics[scale=0.5]{../pointplot.pdf}
+    \caption{Events are concentrated in regions of heavy traffic and
+    congestion.}
+\end{figure}
+
+Detected traffic events have been plotted with CHP incident reports in
+figure~\ref{fig:pointplot}.  Most events occur during the morning rush and
+in the region between miles 0 and 15, which is the region between Berkeley
+and San Francisco. So events are concentrated in areas of high traffic.
+
+\section{Statistical Analysis}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}
+    \label{fig:percent_events}
+    \centering
+    \includegraphics[scale=0.5]{../percent_events.pdf}
+    \caption{Most events could not be linked.}
+\end{figure}
+
+CHP incident reports were linked to bounding boxes if they occurred either within
+a bounding box, or slightly outside of one. This was done because a CHP
+event might be reported immediately before traffic conditions deteriorate.
+A tolerance of 1 mile and 10 minutes was chosen since mile resolution of
+the loop detectors is
+usually under 1 mile, and time resolution is 5 minutes. In
+figure~\ref{fig:percent_events} we see that most events could not be
+linked. This is unsurprising, since not all CHP events will be associated
+with a major traffic disturbance. An example of this is the CHP responding
+to a call on smuggled fishing boats. 
+
+\begin{figure}
+    \label{fig:logistic}
+    \centering
+    \includegraphics[scale=0.5]{../logistic.pdf}
+    \caption{}
+\end{figure}
+
+Not all traffic events had associated CHP incidents, however those with
+large bounding boxes always did. Traffic events impacting an area of 2
+miles for 2 hours correspond to a bounding box of 240 units. A logistic
+regression model on this data showed that such an event had a 90\% chance
+of being associated with a CHP incident. Let $y = 1$ if an area of high
+occupancy has a CHP incident associated with it, and $y = 0$ otherwise.
+Let $x$ be the bounding box area. The logistic regression model as shown in
+figure~\ref{fig:percent_events} is
+\[
+    \Exp (y | x) = \frac{e^{b_0 + b_1 x}}{1 + e^{b_0 + b_1 x}}.
+\]
+A 95\% confidence interval for $b_1$ is (0.008, 0.017). Since
+this region is positive we conclude that larger bounding box areas are more
+likely to have associated CHP incidents. We have to be a little careful
+with interpreting this, since if a bounding box is large enough
+then it will include CHP incidents with which it's not actually related.
+
+We did not examine any causal relationships between CHP incidents and
+traffic conditions, but this would be a very interesting line of further
+inquiry. Thinking about a vehicle collision as a CHP incident it's possible
+that CHP incidents cause traffic or that traffic causes CHP incidents.
+Both seem plausible.
+
+A linear regression model was fitted using 13 CHP incident types as a
+predictor for the area of the bounding box. CHP incidents types include
+\texttt{type1125-Traffic Hazard, type1182-Trfc Collision-No Inj,
+type20001-Hit and Run w/Injuries}, etc. With a p value of 0.99 this model
+explained less than 1\% of the variance in the area of the bounding box.
+Hence we found no evidence here of a relationship between the type of incident
+and the severity of the traffic incident. This does not mean that such a
+relationship does not exist; it just means that this particular predictor
+in this data doesn't capture it. For example, it's common knowledge that a
+high speed crash blocking multiple lanes will lead to congested traffic,
+but this isn't necessarily captured in the incident type.
+
+\section{Discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+An interesting further analysis would be to examine the actual shapes of
+the traffic events rather than bounding boxes. For example, given
+sufficient resolution a temporary bottleneck placed in uniform traffic and
+then removed should result in an inverted triangular shape.
+
+Refining this analysis and scaling it up to a a larger scale, say all roads
+in the Bay Area for multiple years would provide interesting opportunities to
+detect and examine long term trends.
+
+TODO:
+
+\bibliography{citations} 
+
+\bibliographystyle{apalike}
+
+\section*{Maybe include?}
 
 Occupancy data was treated as an image. To compute the 
-
-We can use opencv to do this. For each freeway we can take the following
-steps:
-\begin{enumerate}
-    \item Read the raw file and convert it to an image with many missing
-        values. 
-    \item Interpolate missing values. 
-    \item Threshold the image, so for a pixel with density $\rho >
-        \rho_0$
-        we define it as high density, otherwise low density. We'll
-        have to experiment to see what the appropriate value of $\rho_0$ is
-        but I suspect around 0.3.
-    \item Once this has been done for every day we can compute an average
-        thresholded image showing the areas of high density. This will show
-        recurring bottlenecks. May need to threshold this also.
-    \item Compare each day with the average. The difference will show the
-        unusual patterns that occurred on just one day. Might have to do
-        some denoising here- eliminate points that are not part of a 
-        cluster.
-\end{enumerate}
-
 Once we have the denoised difference we can do the following:
 \begin{enumerate}
     \item (Optional) Detect shapes that are flat on top, since this is the
@@ -252,18 +327,5 @@ But how can these results be useful more broadly? More accurate
 simulations. Input to real time routing. Impacts of planned construction
 events. Scheduling CHP patrols and recovery services.
 
-\section{Statistical Analysis}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-TODO: Clark will do this part
-
-\section{Conclusions}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-TODO:
-
-\bibliography{citations} 
-
-\bibliographystyle{apalike}
 
 \end{document}

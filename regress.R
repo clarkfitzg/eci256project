@@ -118,6 +118,8 @@ fit2b = glm(has_incident ~ bbox_area, traffic, family = "binomial")
 
 summary(fit2b)
 
+confint(fit2b)
+
 pdf("logistic.pdf")
 
 with(traffic, plot(bbox_area, has_incident
@@ -182,3 +184,8 @@ summary(fit7)
 
 # Also crazy
 #plot(fit7)
+
+# Mile resolution
+with(traffic, median(diff(sort(unique(c(Abs_PM_max, Abs_PM_min))))))
+
+
